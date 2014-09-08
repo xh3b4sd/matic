@@ -1,11 +1,11 @@
 package main
 
 import (
-	"github.com/zyndiecate/matic/cli"
+	cliPkg "github.com/zyndiecate/matic/cli"
 )
 
 var clientMaticVersion string
 
 func main() {
-	cli.NewCli(clientMaticVersion)
+	cliPkg.NewCli(clientMaticVersion)
 }
