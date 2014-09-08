@@ -5,7 +5,6 @@ SOURCE := $(shell find . -name '*.go')
 VERSION := $(shell cat VERSION)
 GOPATH := $(shell pwd)/.gobuild
 PROJECT_PATH := $(GOPATH)/src/github.com/$(ORGANIZATION)
-FIXTURE_PATH := $(PROJECT_PATH)/$(PROJECT)/src/fixture
 
 .PHONY=all clean test
 
@@ -23,23 +22,19 @@ $(GOPATH):
 	cd $(PROJECT_PATH) && ln -s ../../../.. $(PROJECT)
 
 	#
-	# Fetch private packages first (so `go get` skips them later)
+	# Fetch private packages
 
 	#
-	# Fetch public dependencies via `go get`
+	# Fetch public packages
 	GOPATH=$(GOPATH) go get -d github.com/$(ORGANIZATION)/$(PROJECT)
+	GOPATH=$(GOPATH) go get -d github.com/$(ORGANIZATION)/$(PROJECT)/src/fixture/simple
 
 	#
-	# Build test packages (we only want those two, so we use `-d` in go get)
-	GOPATH=$(GOPATH) go get github.com/onsi/gomega
-	GOPATH=$(GOPATH) go get github.com/onsi/ginkgo
+	# Fetch test packages
+	GOPATH=$(GOPATH) go get -d github.com/onsi/gomega
+	GOPATH=$(GOPATH) go get -d github.com/onsi/ginkgo
 
 # build
 $(PROJECT): $(SOURCE)
 	GOPATH=$(GOPATH) go build -ldflags "-X main.clientMaticVersion $(VERSION)" -o $(PROJECT)
-
-build-fixture:
-	cd $(FIXTURE_PATH)/simple && make
-
-clean-fixture:
-	cd $(FIXTURE_PATH)/simple/ && rm -rf simple .gobuild
+	GOPATH=$(GOPATH) go build ./src/fixture/simple
