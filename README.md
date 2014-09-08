@@ -32,3 +32,13 @@
 - client methods need to return http status code
 - client methods need to return http response body as string
 - client methods need to return http response body as read closer
+
+### usage
+
+```bash
+$ make
+$ clean
+$ test
+$ make build-fixture
+$ make clean-fixture
+```
