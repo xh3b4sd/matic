@@ -1,4 +1,6 @@
-# client-matic
+# matic
+
+Autogenerate clients for web-apps
 
 ### spec
 
