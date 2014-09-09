@@ -21,7 +21,7 @@ func (q *Queue) RunTasks(tasks ...Task) error {
 		return Mask(ErrNoTasks)
 	}
 
-	if err := q.inSeries(tasks...); err != nil {
+	if err := inSeries(q.Ctx, tasks...); err != nil {
 		return Mask(err)
 	}
 
@@ -30,7 +30,7 @@ func (q *Queue) RunTasks(tasks ...Task) error {
 
 func (q *Queue) InSeries(tasks ...Task) Task {
 	return func(ctx interface{}) error {
-		if err := q.inSeries(tasks...); err != nil {
+		if err := inSeries(ctx, tasks...); err != nil {
 			return Mask(err)
 		}
 
@@ -77,9 +77,9 @@ func (q *Queue) InParallel(tasks ...Task) Task {
 	}
 }
 
-func (q *Queue) inSeries(tasks ...Task) error {
+func inSeries(ctx interface{}, tasks ...Task) error {
 	for _, t := range tasks {
-		if err := t(q.Ctx); err != nil {
+		if err := t(ctx); err != nil {
 			return Mask(err)
 		}
 	}
