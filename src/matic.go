@@ -5,6 +5,7 @@ import (
 	_ "github.com/zyndiecate/taskq"
 )
 
-func Foo() string {
-	return "foo"
+func SourceCode(path string) (string, error) {
+	// TODO
+	return path, nil
 }

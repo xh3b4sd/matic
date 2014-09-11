@@ -4,8 +4,8 @@ import (
 	cliPkg "github.com/zyndiecate/matic/cli"
 )
 
-var clientMaticVersion string
+var projectVersion string
 
 func main() {
-	cliPkg.NewCli(clientMaticVersion)
+	cliPkg.NewMaticCmd(projectVersion)
 }
