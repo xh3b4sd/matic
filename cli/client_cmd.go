@@ -3,35 +3,58 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
-	maticPkg "github.com/zyndiecate/matic/src"
+	generatorPkg "github.com/zyndiecate/matic/generator"
+	goPkg "github.com/zyndiecate/matic/generator/go"
 )
 
 var (
+	// Library.
+	clientGenerator generatorPkg.ClientGeneratorI
+
+	// CLI.
 	clientCmd = &cobra.Command{
 		Use:   "client",
 		Short: "Autogenerate client for web-service",
 		Long:  "Autogenerate client for web-service",
 		Run:   clientRun,
 	}
+
+	// Flags.
+	lang string
+	root string
 )
 
+func init() {
+	clientCmd.PersistentFlags().StringVarP(&lang, "lang", "l", "go", "Which language to use to generate client")
+}
+
 func clientRun(cmd *cobra.Command, args []string) {
+	// Setup client generator.
+	switch lang {
+	case "go":
+		clientGenerator = goPkg.NewGoClientGenerator()
+	default:
+		cmd.Help()
+	}
+
+	// Setup source code root.
 	switch len(args) {
 	case 0:
-		// Generate client based on current directory.
-		s, err := maticPkg.SourceCode(".")
-		if err != nil {
-			ExitStderr(Mask(err))
-		}
-
-		ExitStdoutf(s)
+		root = "."
 	case 1:
-		// Generate client based on given directory.
-		s, err := maticPkg.SourceCode(args[0])
-		if err != nil {
-			ExitStderr(Mask(err))
-		}
+		root = args[0]
+	default:
+		cmd.Help()
+	}
 
-		ExitStdoutf(s)
+	// Generate client based on given directory.
+	sourceCodeList, err := clientGenerator.GenerateClient(root)
+	if err != nil {
+		ExitStderr(Mask(err))
+	}
+
+	for _, item := range sourceCodeList {
+		Verbosef("### %s ####", item.Path)
+		Verbosef(item.Code)
 	}
 }

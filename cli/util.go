@@ -44,16 +44,28 @@ func debug(v ...interface{}) {
 	if globalFlags.debug {
 		for _, obj := range v {
 			if _, isErr := obj.(error); isErr {
-				fmt.Printf("DEBUG: %#v\n\n", obj)
+				fmt.Println()
+				fmt.Printf("DEBUG: %#v", obj)
+				fmt.Println()
+				fmt.Println()
 			}
 		}
 	}
 }
 
 func stderrf(f string, v ...interface{}) {
-	fmt.Fprintf(os.Stderr, f+"\n", v...)
+	printf(os.Stderr, f, v...)
 }
 
 func stdoutf(f string, v ...interface{}) {
-	fmt.Fprintf(os.Stdout, f+"\n", v...)
+	printf(os.Stdout, f, v...)
+}
+
+func printf(file *os.File, f string, v ...interface{}) {
+	if f == "" {
+		return
+	}
+
+	fmt.Fprintf(file, f, v...)
+	fmt.Println()
 }
