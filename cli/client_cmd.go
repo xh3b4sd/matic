@@ -25,7 +25,7 @@ var (
 )
 
 func init() {
-	clientCmd.PersistentFlags().StringVarP(&lang, "lang", "l", "go", "Which language to use to generate client")
+	clientCmd.Flags().StringVarP(&lang, "lang", "l", "go", "Which language to use to generate client")
 }
 
 func clientRun(cmd *cobra.Command, args []string) {
