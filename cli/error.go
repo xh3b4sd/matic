@@ -5,5 +5,7 @@ import (
 )
 
 var (
+	ErrWrongInput = errgo.New("Wrong input")
+
 	Mask = errgo.MaskFunc()
 )

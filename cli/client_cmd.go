@@ -35,6 +35,7 @@ func clientRun(cmd *cobra.Command, args []string) {
 		clientGenerator = goPkg.NewGoClientGenerator()
 	default:
 		cmd.Help()
+		ExitStderr(ErrWrongInput)
 	}
 
 	// Setup source code root.
@@ -45,6 +46,7 @@ func clientRun(cmd *cobra.Command, args []string) {
 		root = args[0]
 	default:
 		cmd.Help()
+		ExitStderr(ErrWrongInput)
 	}
 
 	// Generate client based on given directory.
