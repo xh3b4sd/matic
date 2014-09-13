@@ -27,7 +27,7 @@ $(GOPATH):
 	#
 	# Fetch public packages
 	GOPATH=$(GOPATH) go get -d github.com/$(ORGANIZATION)/$(PROJECT)
-	GOPATH=$(GOPATH) go get -d github.com/$(ORGANIZATION)/$(PROJECT)/src/fixture/simple
+	GOPATH=$(GOPATH) go get -d github.com/$(ORGANIZATION)/$(PROJECT)/fixture/simple
 
 	#
 	# Fetch test packages
@@ -37,4 +37,4 @@ $(GOPATH):
 # build
 $(PROJECT): $(SOURCE)
 	GOPATH=$(GOPATH) go build -ldflags "-X main.clientMaticVersion $(VERSION)" -o $(PROJECT)
-	GOPATH=$(GOPATH) go build ./src/fixture/simple
+	GOPATH=$(GOPATH) go build ./fixture/simple

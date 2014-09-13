@@ -1,4 +1,4 @@
-package matic
+package main
 
 import (
 	"github.com/juju/errgo"
