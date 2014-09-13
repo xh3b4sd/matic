@@ -14,6 +14,9 @@ type SourceCode struct {
 }
 
 type SourceCodeCtx struct {
+	// Extension of source code files to analyse, to generate a client.
+	Ext string
+
 	// The root path source code will be collected from.
 	Root string
 
@@ -23,6 +26,7 @@ type SourceCodeCtx struct {
 
 func SourceCodeTask(ctx interface{}) error {
 	root := ctx.(*Ctx).SourceCodeCtx.Root
+	ext := ctx.(*Ctx).SourceCodeCtx.Ext
 
 	Verbosef("Reading source code from root '%s'", root)
 
@@ -32,7 +36,7 @@ func SourceCodeTask(ctx interface{}) error {
 		}
 
 		// Skip uninteresting files.
-		if skipFile(path, info) {
+		if skipFile(ext, path, info) {
 			return nil
 		}
 

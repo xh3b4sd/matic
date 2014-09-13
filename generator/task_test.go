@@ -29,6 +29,7 @@ var _ = Describe("task", func() {
 
 			ctx = &generatorPkg.Ctx{
 				SourceCodeCtx: generatorPkg.SourceCodeCtx{
+					Ext:  "go",
 					Root: root,
 				},
 			}

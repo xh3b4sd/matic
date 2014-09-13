@@ -23,6 +23,7 @@ func (gcg *GoClientGenerator) GenerateClient(root string) ([]generatorPkg.Source
 	// Create task context.
 	ctx := &generatorPkg.Ctx{
 		SourceCodeCtx: generatorPkg.SourceCodeCtx{
+			Ext:  "go",
 			Root: root,
 		},
 	}

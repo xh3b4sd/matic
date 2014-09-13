@@ -6,14 +6,14 @@ import (
 	"path/filepath"
 )
 
-func skipFile(path string, info os.FileInfo) bool {
+func skipFile(ext, path string, info os.FileInfo) bool {
 	// Skip directories.
 	if info.IsDir() {
 		return true
 	}
 
 	// Skip none go files.
-	if filepath.Ext(path) != ".go" {
+	if filepath.Ext(path) != "."+ext {
 		return true
 	}
 
