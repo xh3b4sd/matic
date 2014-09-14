@@ -1,8 +1,6 @@
 package generator_test
 
 import (
-	"testing"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -10,17 +8,13 @@ import (
 	taskqPkg "github.com/zyndiecate/taskq"
 )
 
-func TestTask(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "task")
-}
-
 var _ = Describe("task", func() {
 	Describe("source code", func() {
 		var (
-			ctx  *generatorPkg.Ctx
-			root string
-			err  error
+			root           string
+			err            error
+			ctx            *generatorPkg.Ctx
+			sourceCodeList []generatorPkg.SourceCode
 		)
 
 		BeforeEach(func() {
@@ -28,7 +22,7 @@ var _ = Describe("task", func() {
 			root = "../fixture/simple/"
 
 			ctx = &generatorPkg.Ctx{
-				SourceCodeCtx: generatorPkg.SourceCodeCtx{
+				SourceCode: generatorPkg.SourceCodeCtx{
 					Ext:  "go",
 					Root: root,
 				},
@@ -39,6 +33,8 @@ var _ = Describe("task", func() {
 					generatorPkg.SourceCodeTask,
 				),
 			)
+
+			sourceCodeList = ctx.SourceCode.SourceCodeList
 		})
 
 		Context("run source code task", func() {
@@ -47,19 +43,19 @@ var _ = Describe("task", func() {
 			})
 
 			It("should find 3 files", func() {
-				Expect(ctx.SourceCodeCtx.SourceCodeList).To(HaveLen(3))
+				Expect(sourceCodeList).To(HaveLen(3))
 			})
 
 			It("should find middleware/v1/middleware.go", func() {
-				Expect(ctx.SourceCodeCtx.SourceCodeList[0].Path).To(Equal("../fixture/simple/middleware/v1/middleware.go"))
+				Expect(sourceCodeList[0].FilePath).To(Equal("../fixture/simple/middleware/v1/middleware.go"))
 			})
 
 			It("should find middleware/v1/v1.go", func() {
-				Expect(ctx.SourceCodeCtx.SourceCodeList[1].Path).To(Equal("../fixture/simple/middleware/v1/v1.go"))
+				Expect(sourceCodeList[1].FilePath).To(Equal("../fixture/simple/middleware/v1/v1.go"))
 			})
 
 			It("should find simple.go", func() {
-				Expect(ctx.SourceCodeCtx.SourceCodeList[2].Path).To(Equal("../fixture/simple/simple.go"))
+				Expect(sourceCodeList[2].FilePath).To(Equal("../fixture/simple/simple.go"))
 			})
 		})
 	})
