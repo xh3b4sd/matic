@@ -1,4 +1,4 @@
-package generator_test
+package collector_test
 
 import (
 	"fmt"
@@ -6,25 +6,25 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	generatorPkg "github.com/zyndiecate/matic/generator"
+	collectorPkg "github.com/zyndiecate/matic/collector"
 	taskqPkg "github.com/zyndiecate/taskq"
 )
 
 var _ = Describe("serve-stmt", func() {
 	Describe("source code", func() {
 		var (
-			ctx           *generatorPkg.Ctx
+			ctx           *collectorPkg.Ctx
 			root          string
 			err           error
-			serveStmtList []generatorPkg.ServeStmt
+			serveStmtList []collectorPkg.ServeStmt
 		)
 
 		BeforeEach(func() {
 			err = nil
 			root = "../fixture/simple/"
 
-			ctx = &generatorPkg.Ctx{
-				SourceCode: generatorPkg.SourceCodeCtx{
+			ctx = &collectorPkg.Ctx{
+				SourceCode: collectorPkg.SourceCodeCtx{
 					Ext:  "go",
 					Root: root,
 				},
@@ -32,10 +32,10 @@ var _ = Describe("serve-stmt", func() {
 
 			err = taskqPkg.NewQueue(ctx).RunTasks(
 				taskqPkg.InSeries(
-					generatorPkg.SourceCodeTask,
-					generatorPkg.PackageImportTask,
-					generatorPkg.ServerNameTask,
-					generatorPkg.ServeStmtTask,
+					collectorPkg.SourceCodeTask,
+					collectorPkg.PackageImportTask,
+					collectorPkg.ServerNameTask,
+					collectorPkg.ServeStmtTask,
 				),
 			)
 

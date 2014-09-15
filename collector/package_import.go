@@ -1,4 +1,4 @@
-package generator
+package collector
 
 import (
 	"go/parser"

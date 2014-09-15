@@ -1,10 +1,10 @@
-package generator_test
+package collector_test
 
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	generatorPkg "github.com/zyndiecate/matic/generator"
+	collectorPkg "github.com/zyndiecate/matic/collector"
 	taskqPkg "github.com/zyndiecate/taskq"
 )
 
@@ -13,16 +13,16 @@ var _ = Describe("task", func() {
 		var (
 			root           string
 			err            error
-			ctx            *generatorPkg.Ctx
-			sourceCodeList []generatorPkg.SourceCode
+			ctx            *collectorPkg.Ctx
+			sourceCodeList []collectorPkg.SourceCode
 		)
 
 		BeforeEach(func() {
 			err = nil
 			root = "../fixture/simple/"
 
-			ctx = &generatorPkg.Ctx{
-				SourceCode: generatorPkg.SourceCodeCtx{
+			ctx = &collectorPkg.Ctx{
+				SourceCode: collectorPkg.SourceCodeCtx{
 					Ext:  "go",
 					Root: root,
 				},
@@ -30,7 +30,7 @@ var _ = Describe("task", func() {
 
 			err = taskqPkg.NewQueue(ctx).RunTasks(
 				taskqPkg.InSeries(
-					generatorPkg.SourceCodeTask,
+					collectorPkg.SourceCodeTask,
 				),
 			)
 

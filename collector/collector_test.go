@@ -1,4 +1,4 @@
-package generator_test
+package collector_test
 
 import (
 	"testing"
@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestGenerator(t *testing.T) {
+func TestCollector(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "generator")
+	RunSpecs(t, "collector")
 }

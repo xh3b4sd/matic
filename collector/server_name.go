@@ -1,4 +1,4 @@
-package generator
+package collector
 
 type ServerNameCtx struct {
 	// Server name of the created middleware server.

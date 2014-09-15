@@ -3,7 +3,7 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
-	generatorPkg "github.com/zyndiecate/matic/generator"
+	collectorPkg "github.com/zyndiecate/matic/collector"
 )
 
 var (
@@ -21,7 +21,7 @@ var (
 )
 
 func init() {
-	generatorPkg.Configure(Verbosef)
+	collectorPkg.Configure(Verbosef)
 
 	maticCmd.PersistentFlags().BoolVarP(&globalFlags.debug, "debug", "d", false, "Print debug output")
 	maticCmd.PersistentFlags().BoolVarP(&globalFlags.verbose, "verbose", "v", false, "Print verbose output")

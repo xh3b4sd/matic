@@ -1,4 +1,4 @@
-package generator
+package collector
 
 import (
 	taskqPkg "github.com/zyndiecate/taskq"
@@ -21,7 +21,7 @@ type Ctx struct {
 	ServeStmt     ServeStmtCtx
 }
 
-type ClientGeneratorI interface {
+type ClientCollectorI interface {
 	// Generate a clients source code based on the given root path.
 	GenerateClient(root string) ([]SourceCode, error)
 
@@ -32,13 +32,13 @@ type ClientGeneratorI interface {
 	//CreateClientWithApiBlueprint(path, apiBlueprint string) error
 }
 
-type GoClientGenerator struct{}
+type GoClientCollector struct{}
 
-func NewGoClientGenerator() ClientGeneratorI {
-	return &GoClientGenerator{}
+func NewGoClientCollector() ClientCollectorI {
+	return &GoClientCollector{}
 }
 
-func (gcg *GoClientGenerator) GenerateClient(root string) ([]SourceCode, error) {
+func (gcg *GoClientCollector) GenerateClient(root string) ([]SourceCode, error) {
 	// Create task context.
 	ctx := &Ctx{
 		SourceCode: SourceCodeCtx{
@@ -74,6 +74,6 @@ func (gcg *GoClientGenerator) GenerateClient(root string) ([]SourceCode, error) 
 	return ctx.SourceCode.SourceCodeList, nil
 }
 
-func (gcg *GoClientGenerator) ApiBlueprint(root string) (string, error) {
+func (gcg *GoClientCollector) ApiBlueprint(root string) (string, error) {
 	return "", nil
 }
