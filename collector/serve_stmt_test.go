@@ -1,8 +1,6 @@
 package collector_test
 
 import (
-	"fmt"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -13,21 +11,17 @@ import (
 var _ = Describe("serve-stmt", func() {
 	Describe("source code", func() {
 		var (
-			ctx           *collectorPkg.Ctx
-			root          string
-			err           error
-			serveStmtList []collectorPkg.ServeStmt
+			ctx *collectorPkg.Ctx
+			wd  string
+			err error
 		)
 
 		BeforeEach(func() {
 			err = nil
-			root = "../fixture/simple/"
+			wd = "../fixture/simple/"
 
 			ctx = &collectorPkg.Ctx{
-				SourceCode: collectorPkg.SourceCodeCtx{
-					Ext:  "go",
-					Root: root,
-				},
+				WorkingDir: wd,
 			}
 
 			err = taskqPkg.NewQueue(ctx).RunTasks(
@@ -38,8 +32,6 @@ var _ = Describe("serve-stmt", func() {
 					collectorPkg.ServeStmtTask,
 				),
 			)
-
-			serveStmtList = ctx.ServeStmt.ServeStmtList
 		})
 
 		Context("run source code task", func() {
@@ -48,30 +40,31 @@ var _ = Describe("serve-stmt", func() {
 			})
 
 			It("should find 3 serve statements", func() {
-				Expect(ctx.ServeStmt.ServeStmtList).To(HaveLen(3))
+				Expect(ctx.Files[0].ServeStmts).To(HaveLen(0))
+				Expect(ctx.Files[1].ServeStmts).To(HaveLen(2))
+				Expect(ctx.Files[2].ServeStmts).To(HaveLen(1))
 			})
 
 			It("should find serve statement of 'hello' route", func() {
-				Expect(serveStmtList[0].Method).To(Equal("GET"))
-				Expect(serveStmtList[0].Path).To(Equal("/v1/hello"))
-				Expect(serveStmtList[0].Middlewares).To(HaveLen(1))
-				Expect(serveStmtList[0].Middlewares[0].FuncSel).To(Equal("MiddlewareOne"))
+				Expect(ctx.Files[1].ServeStmts[0].Method).To(Equal("GET"))
+				Expect(ctx.Files[1].ServeStmts[0].Path).To(Equal("/v1/hello"))
+				Expect(ctx.Files[1].ServeStmts[0].Middlewares).To(HaveLen(1))
+				Expect(ctx.Files[1].ServeStmts[0].Middlewares[0].FuncSel).To(Equal("MiddlewareOne"))
 			})
 
 			It("should find serve statement of 'world' route", func() {
-				Expect(serveStmtList[1].Method).To(Equal("GET"))
-				Expect(serveStmtList[1].Path).To(Equal("/v1/world"))
-				Expect(serveStmtList[1].Middlewares).To(HaveLen(1))
-				Expect(serveStmtList[1].Middlewares[0].FuncSel).To(Equal("MiddlewareTwo"))
+				Expect(ctx.Files[1].ServeStmts[1].Method).To(Equal("GET"))
+				Expect(ctx.Files[1].ServeStmts[1].Path).To(Equal("/v1/world"))
+				Expect(ctx.Files[1].ServeStmts[1].Middlewares).To(HaveLen(1))
+				Expect(ctx.Files[1].ServeStmts[1].Middlewares[0].FuncSel).To(Equal("MiddlewareTwo"))
 			})
 
 			It("should find serve statement of 'hello world' route", func() {
-				fmt.Printf("%#v\n", ctx.ServeStmt.ServeStmtList)
-				Expect(serveStmtList[2].Method).To(Equal("GET"))
-				Expect(serveStmtList[2].Path).To(Equal("/v1/hello-world"))
-				Expect(serveStmtList[2].Middlewares).To(HaveLen(2))
-				Expect(serveStmtList[2].Middlewares[0].FuncSel).To(Equal("MiddlewareOne"))
-				Expect(serveStmtList[2].Middlewares[1].FuncSel).To(Equal("MiddlewareTwo"))
+				Expect(ctx.Files[2].ServeStmts[0].Method).To(Equal("GET"))
+				Expect(ctx.Files[2].ServeStmts[0].Path).To(Equal("/v1/hello-world"))
+				Expect(ctx.Files[2].ServeStmts[0].Middlewares).To(HaveLen(2))
+				Expect(ctx.Files[2].ServeStmts[0].Middlewares[0].FuncSel).To(Equal("MiddlewareOne"))
+				Expect(ctx.Files[2].ServeStmts[0].Middlewares[1].FuncSel).To(Equal("MiddlewareTwo"))
 			})
 		})
 	})

@@ -49,7 +49,7 @@ func clientRun(cmd *cobra.Command, args []string) {
 	}
 
 	// Generate client based on given directory.
-	_, err := clientCollector.GenerateClient(root)
+	err := clientCollector.GenerateClient(root)
 	if err != nil {
 		ExitStderr(Mask(err))
 	}

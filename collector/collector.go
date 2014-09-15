@@ -1,6 +1,8 @@
 package collector
 
 import (
+	"go/ast"
+
 	taskqPkg "github.com/zyndiecate/taskq"
 )
 
@@ -14,16 +16,39 @@ func Configure(verboseLogger Logger) {
 	Verbosef = verboseLogger
 }
 
+type File struct {
+	// File path of a source code file.
+	Path string
+
+	// Go code in string form of a source code file.
+	Code string
+
+	// Variable name of the imported middleware package, if any.
+	PkgImport string
+
+	// *ast.File of the current go code.
+	AstFile *ast.File
+
+	// Serve information describing which routes the middleware server provides.
+	ServeStmts []ServeStmt
+
+	// Middleware information describing data and logic used of provided routes.
+	//Middlewares []Middleware
+}
+
 type Ctx struct {
-	SourceCode    SourceCodeCtx
-	PackageImport PackageImportCtx
-	ServerName    ServerNameCtx
-	ServeStmt     ServeStmtCtx
+	WorkingDir string
+
+	// Variable name of the created middleware server, if any. We assume there is
+	// only one created middleware server. Maybe that is not true for all cases.
+	ServerName string
+
+	Files []File
 }
 
 type ClientCollectorI interface {
 	// Generate a clients source code based on the given root path.
-	GenerateClient(root string) ([]SourceCode, error)
+	GenerateClient(root string) error
 
 	// Generate a api blueprint based on the given root path.
 	ApiBlueprint(root string) (string, error)
@@ -38,13 +63,10 @@ func NewGoClientCollector() ClientCollectorI {
 	return &GoClientCollector{}
 }
 
-func (gcg *GoClientCollector) GenerateClient(root string) ([]SourceCode, error) {
+func (gcg *GoClientCollector) GenerateClient(wd string) error {
 	// Create task context.
 	ctx := &Ctx{
-		SourceCode: SourceCodeCtx{
-			Ext:  "go",
-			Root: root,
-		},
+		WorkingDir: wd,
 	}
 
 	// Create a new queue.
@@ -63,15 +85,10 @@ func (gcg *GoClientCollector) GenerateClient(root string) ([]SourceCode, error) 
 	)
 
 	if err != nil {
-		return []SourceCode{}, Mask(err)
+		return Mask(err)
 	}
 
-	//for _, item := range ctx.PackageImport.PackageImportList {
-	//	Verbosef("### %s ####", item.FilePath)
-	//	Verbosef(item.PkgName)
-	//}
-
-	return ctx.SourceCode.SourceCodeList, nil
+	return nil
 }
 
 func (gcg *GoClientCollector) ApiBlueprint(root string) (string, error) {

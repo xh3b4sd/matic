@@ -1,44 +1,24 @@
 package collector
 
 import (
+	"go/parser"
+	"go/token"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 )
 
-type SourceCode struct {
-	// File path to the current source code file.
-	FilePath string
-
-	// Content of the current source code file.
-	Code string
-}
-
-type SourceCodeCtx struct {
-	// Extension of source code files to analyse, to generate a client.
-	Ext string
-
-	// The root path source code will be collected from.
-	Root string
-
-	// List of found source code.
-	SourceCodeList []SourceCode
-}
-
 // Find all important source code files.
 func SourceCodeTask(ctx interface{}) error {
-	root := ctx.(*Ctx).SourceCode.Root
-	ext := ctx.(*Ctx).SourceCode.Ext
+	Verbosef("Reading source code")
 
-	Verbosef("Reading source code from '%s'", root)
-
-	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+	err := filepath.Walk(ctx.(*Ctx).WorkingDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return Mask(err)
 		}
 
 		// Skip uninteresting files.
-		if skipFile(ext, path, info) {
+		if skipFile(path, info) {
 			return nil
 		}
 
@@ -48,11 +28,21 @@ func SourceCodeTask(ctx interface{}) error {
 			return Mask(err)
 		}
 
-		// Fill context.
-		ctx.(*Ctx).SourceCode.SourceCodeList = append(
-			ctx.(*Ctx).SourceCode.SourceCodeList,
-			SourceCode{FilePath: path, Code: code},
-		)
+		// Create an ast tree for the given piece of source code.
+		fset := token.NewFileSet()
+		astFile, err := parser.ParseFile(fset, path, code, 0)
+		if err != nil {
+			return Mask(err)
+		}
+
+		// Create context file.
+		file := File{
+			Path:    path,
+			Code:    code,
+			AstFile: astFile,
+		}
+
+		ctx.(*Ctx).Files = append(ctx.(*Ctx).Files, file)
 
 		return nil
 	})
@@ -67,14 +57,14 @@ func SourceCodeTask(ctx interface{}) error {
 ////////////////////////////////////////////////////////////////////////////////
 // private
 
-func skipFile(ext, path string, info os.FileInfo) bool {
+func skipFile(path string, info os.FileInfo) bool {
 	// Skip directories.
 	if info.IsDir() {
 		return true
 	}
 
 	// Skip none go files.
-	if filepath.Ext(path) != "."+ext {
+	if filepath.Ext(path) != ".go" {
 		return true
 	}
 

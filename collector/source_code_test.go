@@ -11,21 +11,17 @@ import (
 var _ = Describe("task", func() {
 	Describe("source code", func() {
 		var (
-			root           string
-			err            error
-			ctx            *collectorPkg.Ctx
-			sourceCodeList []collectorPkg.SourceCode
+			wd  string
+			err error
+			ctx *collectorPkg.Ctx
 		)
 
 		BeforeEach(func() {
 			err = nil
-			root = "../fixture/simple/"
+			wd = "../fixture/simple/"
 
 			ctx = &collectorPkg.Ctx{
-				SourceCode: collectorPkg.SourceCodeCtx{
-					Ext:  "go",
-					Root: root,
-				},
+				WorkingDir: wd,
 			}
 
 			err = taskqPkg.NewQueue(ctx).RunTasks(
@@ -33,8 +29,6 @@ var _ = Describe("task", func() {
 					collectorPkg.SourceCodeTask,
 				),
 			)
-
-			sourceCodeList = ctx.SourceCode.SourceCodeList
 		})
 
 		Context("run source code task", func() {
@@ -43,19 +37,19 @@ var _ = Describe("task", func() {
 			})
 
 			It("should find 3 files", func() {
-				Expect(sourceCodeList).To(HaveLen(3))
+				Expect(ctx.Files).To(HaveLen(3))
 			})
 
 			It("should find middleware/v1/middleware.go", func() {
-				Expect(sourceCodeList[0].FilePath).To(Equal("../fixture/simple/middleware/v1/middleware.go"))
+				Expect(ctx.Files[0].Path).To(Equal("../fixture/simple/middleware/v1/middleware.go"))
 			})
 
 			It("should find middleware/v1/v1.go", func() {
-				Expect(sourceCodeList[1].FilePath).To(Equal("../fixture/simple/middleware/v1/v1.go"))
+				Expect(ctx.Files[1].Path).To(Equal("../fixture/simple/middleware/v1/v1.go"))
 			})
 
 			It("should find simple.go", func() {
-				Expect(sourceCodeList[2].FilePath).To(Equal("../fixture/simple/simple.go"))
+				Expect(ctx.Files[2].Path).To(Equal("../fixture/simple/simple.go"))
 			})
 		})
 	})

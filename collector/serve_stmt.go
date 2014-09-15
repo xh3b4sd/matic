@@ -23,110 +23,62 @@ type ServeStmt struct {
 	Middlewares []MiddlewareExpr
 }
 
-type IndirectServeStmt struct{}
-
-type ServeStmtCtx struct {
-	ServeStmtList []ServeStmt
-	Indirect      IndirectServeStmt
-}
-
 func ServeStmtTask(ctx interface{}) error {
 	Verbosef("Searching serve statements")
 
-	serveStmtList := []ServeStmt{}
-	serverName := ctx.(*Ctx).ServerName
-
-	for _, packageImport := range ctx.(*Ctx).PackageImport.PackageImportList {
-		astTree, err := astTreeByFile(packageImport.FilePath, ctx.(*Ctx).SourceCode.SourceCodeList)
-		if err != nil {
-			return Mask(err)
+	for i, file := range ctx.(*Ctx).Files {
+		if file.PkgImport == "" {
+			continue
 		}
 
-		ast.Inspect(astTree, func(n ast.Node) bool {
+		serveStmts := []ServeStmt{}
+
+		ast.Inspect(file.AstFile, func(n ast.Node) bool {
 			if n == nil {
 				return true
 			}
 
 			switch callExpr := n.(type) {
 			case *ast.CallExpr:
-				selExpr := callExpr.Fun.(*ast.SelectorExpr)
+				switch selExpr := callExpr.Fun.(type) {
+				case *ast.SelectorExpr:
+					if selExpr.Sel.Name != "Serve" {
+						return true
+					}
 
-				if selExpr.Sel.Name != "Serve" {
-					return true
+					// Get serve statement of Serve() methods, where the callers expression
+					// is directly assigned by the packages NewServer() method.
+					isServeDirectlyAssigned := selExpr.Sel.Obj == nil
+					isServerServe := selExpr.X.(*ast.Ident).Name == ctx.(*Ctx).ServerName
+					// TODO && packageImport.FilePath == serverName.FilePath
+					if isServeDirectlyAssigned && isServerServe {
+						serveStmt := serveStmtByCallExpr(callExpr)
+						serveStmts = append(serveStmts, serveStmt)
+						return true
+					}
+
+					// Get serve statement of Serve() methods, where the callers expression
+					// is NOT directly assigned by the packages NewServer() method, but
+					// referenced as method parameter.
+					serveStmt(callExpr, file.PkgImport, func(serveStmt ServeStmt) {
+						serveStmts = append(serveStmts, serveStmt)
+					})
 				}
-
-				// Get serve statement of Serve() methods, where the callers expression
-				// is directly assigned by the packages NewServer() method.
-				if selExpr.Sel.Obj == nil &&
-					selExpr.X.(*ast.Ident).Name == serverName.Name &&
-					packageImport.FilePath == serverName.FilePath {
-
-					serveStmt := serveStmtByCallExpr(callExpr)
-					serveStmtList = append(serveStmtList, serveStmt)
-					return true
-				}
-
-				// Get serve statement of Serve() methods, where the callers expression
-				// is NOT directly assigned by the packages NewServer() method, but
-				// referenced as method parameter.
-				serveStmt(callExpr, packageImport.PkgName, func(serveStmt ServeStmt) {
-					serveStmtList = append(serveStmtList, serveStmt)
-				})
 			}
 
 			return true
 		})
+
+		ctx.(*Ctx).Files[i].ServeStmts = serveStmts
 	}
 
-	fmt.Printf("%#v\n", serveStmtList)
-
-	ctx.(*Ctx).ServeStmt.ServeStmtList = serveStmtList
+	fmt.Printf("%#v\n", ctx.(*Ctx).Files)
 
 	return nil
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // private
-
-// Find created server name, e.g. srv := srvPkg.NewServer(...)
-func serverName(pkgName string, f *ast.File) string {
-	srvName := ""
-
-	ast.Inspect(f, func(n ast.Node) bool {
-		switch x := n.(type) {
-		case *ast.Ident:
-			if x.Obj != nil {
-				switch y := x.Obj.Decl.(type) {
-				case *ast.ValueSpec:
-					// TODO
-					// var srv = srvPkg.NewServer("127.0.0.1", "8080")
-				case *ast.AssignStmt:
-					// srv := srvPkg.NewServer("127.0.0.1", "8080")
-					for i, rh := range y.Rhs {
-						switch callExpr := rh.(type) {
-						case *ast.CallExpr:
-							switch callExpr.Fun.(type) {
-							case *ast.SelectorExpr:
-								funcExp := callExpr.Fun.(*ast.SelectorExpr).X.(*ast.Ident).Name // srvPkg
-								funcSel := callExpr.Fun.(*ast.SelectorExpr).Sel.Name            // NewServer
-
-								// Here we found the server name
-								if funcExp == pkgName && funcSel == "NewServer" {
-									srvName = y.Lhs[i].(*ast.Ident).Name
-									return false
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-
-		return true
-	})
-
-	return srvName
-}
 
 func serveStmt(callExpr *ast.CallExpr, pkgName string, cb func(ServeStmt)) {
 	selExpr := callExpr.Fun.(*ast.SelectorExpr)
