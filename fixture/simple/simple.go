@@ -14,7 +14,7 @@ func main() {
 
 	v1.SetupHelloRoute(srv)
 	v1Pkg.SetupWorldRoute(v1, srv)
-	srv.Serve("GET", "/v1/hello-world", v1.MiddlewareOne, v1.MiddlewareTwo)
+	srv.Serve("GET", "/v1/hello-world", v1.HelloWorldOne, v1.HelloWorldTwo, v1Pkg.Foo, v1.HelloWorldThree)
 
 	srv.Listen()
 }

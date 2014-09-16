@@ -10,9 +10,9 @@ type V1 struct {
 }
 
 func (v1 *V1) SetupHelloRoute(srv *srvPkg.Server) {
-	srv.Serve("GET", "/v1/hello", v1.MiddlewareOne)
+	srv.Serve("GET", "/v1/hello", v1.Hello)
 }
 
 func SetupWorldRoute(v1 *V1, srv *srvPkg.Server) {
-	srv.Serve("GET", "/v1/world", v1.MiddlewareTwo)
+	srv.Serve("GET", "/v1/world", Foo, v1.World)
 }

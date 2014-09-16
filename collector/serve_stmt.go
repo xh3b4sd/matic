@@ -1,15 +1,20 @@
 package collector
 
 import (
-	"fmt"
+	_ "fmt"
 	"go/ast"
 	"strconv"
 )
 
 type MiddlewareExpr struct {
-	FuncExpr     string
-	FuncExprType string
-	FuncSel      string
+	// The type a middleware is assigned to, e.g. V1 for v1.HelloWorldTwo
+	Type string
+
+	// The package where a middleware is defined, e.g. v1 for Foo
+	Pkg string
+
+	// The name of the middleware method, eg. HelloWorldTwo or Foo
+	Name string
 }
 
 type ServeStmt struct {
@@ -46,23 +51,27 @@ func ServeStmtTask(ctx interface{}) error {
 						return true
 					}
 
-					// Get serve statement of Serve() methods, where the callers expression
-					// is directly assigned by the packages NewServer() method.
+					// Get serve statement of Serve() methods, where the callers
+					// expression is directly assigned by the packages NewServer()
+					// method. That is, each Serve() statement in simple.go
 					isServeDirectlyAssigned := selExpr.Sel.Obj == nil
 					isServerServe := selExpr.X.(*ast.Ident).Name == ctx.(*Ctx).ServerName
-					// TODO && packageImport.FilePath == serverName.FilePath
+
 					if isServeDirectlyAssigned && isServerServe {
-						serveStmt := serveStmtByCallExpr(callExpr)
+						serveStmt := serveStmtByCallExpr(file.AstFile, callExpr)
 						serveStmts = append(serveStmts, serveStmt)
 						return true
 					}
 
-					// Get serve statement of Serve() methods, where the callers expression
-					// is NOT directly assigned by the packages NewServer() method, but
-					// referenced as method parameter.
-					serveStmt(callExpr, file.PkgImport, func(serveStmt ServeStmt) {
+					// Get serve statement of Serve() methods, where the callers
+					// expression is NOT directly assigned by the packages NewServer()
+					// method, but referenced as method parameter. That is, each Serve()
+					// statement in middleware/v1/middleware.go
+					if callExprHasType(file.PkgImport, callExpr) && callExprHasName("Serve", callExpr) {
+						serveStmt := serveStmtByCallExpr(file.AstFile, callExpr)
 						serveStmts = append(serveStmts, serveStmt)
-					})
+						return true
+					}
 				}
 			}
 
@@ -72,36 +81,158 @@ func ServeStmtTask(ctx interface{}) error {
 		ctx.(*Ctx).Files[i].ServeStmts = serveStmts
 	}
 
-	fmt.Printf("%#v\n", ctx.(*Ctx).Files)
-
 	return nil
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // private
 
-func serveStmt(callExpr *ast.CallExpr, pkgName string, cb func(ServeStmt)) {
-	selExpr := callExpr.Fun.(*ast.SelectorExpr)
+// Return true if e.g. strName is Serve and callExpr is srv.Serve(...)
+func callExprHasName(strName string, callExpr *ast.CallExpr) bool {
+	selExpr := starTypeSelExprByCallExpr(callExpr)
 
+	if selExpr == nil {
+		return false
+	}
+
+	if selExpr.Sel.Name == strName {
+		return true
+	}
+
+	return false
+}
+
+// Return true if e.g. strType is srvPkg and callExpr is srv.Serve()
+func callExprHasType(strType string, callExpr *ast.CallExpr) bool {
+	selExpr := starTypeSelExprByCallExpr(callExpr)
+
+	if selExpr == nil {
+		return false
+	}
+
+	return selExpr.X.(*ast.Ident).Name == strType
+}
+
+func starExprBySelExpr(selExpr *ast.SelectorExpr) *ast.StarExpr {
 	switch ai := selExpr.X.(type) {
 	case *ast.Ident:
-		switch af := ai.Obj.Decl.(type) {
+		if ai.Obj == nil {
+			return nil
+		}
+
+		switch x := ai.Obj.Decl.(type) {
 		case *ast.Field:
-			switch aStarE := af.Type.(type) {
+			switch aStarExpr := x.Type.(type) {
 			case *ast.StarExpr:
-				switch aSelE := aStarE.X.(type) {
-				case *ast.SelectorExpr:
-					if aSelE.X.(*ast.Ident).Name == pkgName && aSelE.Sel.Name == "Server" {
-						serveStmt := serveStmtByCallExpr(callExpr)
-						cb(serveStmt)
+				return aStarExpr
+			}
+		}
+	}
+
+	return nil
+}
+
+// Return true if e.g. strType is V1 and selExpr is v1.MiddlewareOne
+func selExprHasType(strType string, selExpr *ast.SelectorExpr) bool {
+	return selExprType(selExpr) == strType
+}
+
+// Return V1 if e.g. selExpr is v1.MiddlewareOne
+func selExprType(selExpr *ast.SelectorExpr) string {
+	starExpr := starExprBySelExpr(selExpr)
+
+	if starExpr == nil {
+		switch ai := selExpr.X.(type) {
+		case *ast.Ident:
+			if ai.Obj == nil {
+				return ""
+			}
+
+			switch x := ai.Obj.Decl.(type) {
+			case *ast.AssignStmt:
+				return assignStmtType(x)
+			}
+		}
+	}
+
+	switch aIdent := starExpr.X.(type) {
+	case *ast.Ident:
+		return aIdent.Name
+	}
+
+	return ""
+}
+
+// Return v1Pkg if e.g. selExpr is v1.MiddlewareOne
+func selExprPkg(selExpr *ast.SelectorExpr) string {
+	selExprType := selExprType(selExpr)
+
+	if selExprType == "" {
+		return selExpr.X.(*ast.Ident).Name
+	}
+
+	return ""
+}
+
+func assignStmtType(assignStmt *ast.AssignStmt) string {
+	if len(assignStmt.Lhs) != 1 {
+		return ""
+	}
+
+	switch aIdent := assignStmt.Lhs[0].(type) {
+	case *ast.Ident:
+		switch assign := aIdent.Obj.Decl.(type) {
+		case *ast.AssignStmt:
+			if len(assign.Lhs) == 1 {
+				switch aIdent2 := assign.Lhs[0].(type) {
+				case *ast.Ident:
+					switch assign2 := aIdent2.Obj.Decl.(type) {
+					case *ast.AssignStmt:
+						if len(assign2.Rhs) == 1 {
+							switch unary := assign2.Rhs[0].(type) {
+							case *ast.UnaryExpr:
+								switch comp := unary.X.(type) {
+								case *ast.CompositeLit:
+									switch selExpr2 := comp.Type.(type) {
+									case *ast.SelectorExpr:
+										return selExpr2.Sel.Name
+									}
+								}
+							}
+						}
 					}
 				}
 			}
 		}
 	}
+
+	return ""
 }
 
-func serveStmtByCallExpr(callExpr *ast.CallExpr) ServeStmt {
+func starTypeSelExprByCallExpr(callExpr *ast.CallExpr) *ast.SelectorExpr {
+	selExpr := callExpr.Fun.(*ast.SelectorExpr)
+	return starTypeSelExprBySelExpr(selExpr)
+}
+
+func starTypeSelExprBySelExpr(selExpr *ast.SelectorExpr) *ast.SelectorExpr {
+	switch ai := selExpr.X.(type) {
+	case *ast.Ident:
+		switch af := ai.Obj.Decl.(type) {
+		case *ast.Field:
+			switch aStarExpr := af.Type.(type) {
+			case *ast.StarExpr:
+				switch aSelExpr := aStarExpr.X.(type) {
+				case *ast.SelectorExpr:
+					return aSelExpr
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func serveStmtByCallExpr(astFile *ast.File, callExpr *ast.CallExpr) ServeStmt {
 	serveStmt := ServeStmt{}
 
 	for i, arg := range callExpr.Args {
@@ -115,9 +246,19 @@ func serveStmtByCallExpr(callExpr *ast.CallExpr) ServeStmt {
 			}
 		case *ast.SelectorExpr:
 			middlewareExpr := MiddlewareExpr{
-				FuncExpr:     v.X.(*ast.Ident).Name, // v1
-				FuncExprType: "V1",                  // TODO,
-				FuncSel:      v.Sel.Name,            // MiddlewareOne
+				Type: selExprType(v),
+				Pkg:  selExprPkg(v),
+				Name: v.Sel.Name,
+			}
+
+			serveStmt.Middlewares = append(serveStmt.Middlewares, middlewareExpr)
+		case *ast.Ident:
+			// Middlewares of Serve() statements in e.g. middleware/v1/v1.go
+
+			middlewareExpr := MiddlewareExpr{
+				Type: "",
+				Pkg:  astFile.Name.Name,
+				Name: v.Name,
 			}
 
 			serveStmt.Middlewares = append(serveStmt.Middlewares, middlewareExpr)
