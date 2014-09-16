@@ -3,13 +3,12 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
-	generatorPkg "github.com/zyndiecate/matic/generator"
-	goPkg "github.com/zyndiecate/matic/generator/go"
+	collectorPkg "github.com/zyndiecate/matic/collector"
 )
 
 var (
 	// Library.
-	clientGenerator generatorPkg.ClientGeneratorI
+	clientCollector collectorPkg.ClientCollectorI
 
 	// CLI.
 	clientCmd = &cobra.Command{
@@ -29,10 +28,10 @@ func init() {
 }
 
 func clientRun(cmd *cobra.Command, args []string) {
-	// Setup client generator.
+	// Setup client collector.
 	switch lang {
 	case "go":
-		clientGenerator = goPkg.NewGoClientGenerator()
+		clientCollector = collectorPkg.NewGoClientCollector()
 	default:
 		cmd.Help()
 		ExitStderr(ErrWrongInput)
@@ -50,13 +49,8 @@ func clientRun(cmd *cobra.Command, args []string) {
 	}
 
 	// Generate client based on given directory.
-	sourceCodeList, err := clientGenerator.GenerateClient(root)
+	err := clientCollector.GenerateClient(root)
 	if err != nil {
 		ExitStderr(Mask(err))
-	}
-
-	for _, item := range sourceCodeList {
-		Verbosef("### %s ####", item.Path)
-		Verbosef(item.Code)
 	}
 }

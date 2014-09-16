@@ -12,6 +12,8 @@ func main() {
 	srv := srvPkg.NewServer("127.0.0.1", "8080")
 	srv.SetLogger(logger)
 
+	v1.SetupHelloRoute(srv)
+	v1Pkg.SetupWorldRoute(v1, srv)
 	srv.Serve("GET", "/v1/hello-world", v1.MiddlewareOne, v1.MiddlewareTwo)
 
 	srv.Listen()
