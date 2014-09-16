@@ -5,7 +5,5 @@ import (
 )
 
 var (
-	ErrSourceCodeNotFoundByFilePath = errgo.New("Source code not found by file path")
-
 	Mask = errgo.MaskFunc()
 )
