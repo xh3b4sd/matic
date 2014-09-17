@@ -19,7 +19,7 @@ func (v1 *V1) HelloWorldTwo(res http.ResponseWriter, req *http.Request, ctx *srv
 }
 
 func Foo(res http.ResponseWriter, req *http.Request, ctx *srvPkg.Context) error {
-	fmt.Printf("%#v\n", "foo")
+	fmt.Printf("%#v\n", "Foo")
 	return ctx.Next()
 }
 

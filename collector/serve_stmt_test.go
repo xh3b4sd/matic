@@ -8,7 +8,7 @@ import (
 	taskqPkg "github.com/zyndiecate/taskq"
 )
 
-var _ = Describe("serve-stmt", func() {
+var _ = Describe("serve stmt", func() {
 	Describe("source code", func() {
 		var (
 			ctx *collectorPkg.Ctx
@@ -50,6 +50,7 @@ var _ = Describe("serve-stmt", func() {
 				Expect(ctx.Files[1].ServeStmts[0].Path).To(Equal("/v1/hello"))
 				Expect(ctx.Files[1].ServeStmts[0].Middlewares).To(HaveLen(1))
 				Expect(ctx.Files[1].ServeStmts[0].Middlewares[0].Type).To(Equal("V1"))
+				Expect(ctx.Files[1].ServeStmts[0].Middlewares[0].Pkg).To(Equal(""))
 				Expect(ctx.Files[1].ServeStmts[0].Middlewares[0].Name).To(Equal("Hello"))
 			})
 

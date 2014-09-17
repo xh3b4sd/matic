@@ -8,7 +8,7 @@ import (
 	taskqPkg "github.com/zyndiecate/taskq"
 )
 
-var _ = Describe("task", func() {
+var _ = Describe("source code", func() {
 	Describe("source code", func() {
 		var (
 			wd  string
