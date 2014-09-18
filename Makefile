@@ -6,18 +6,19 @@ VERSION := $(shell cat VERSION)
 GOPATH := $(shell pwd)/.gobuild
 PROJECT_PATH := $(GOPATH)/src/github.com/$(ORGANIZATION)
 
-.PHONY=all clean test
+.PHONY=all clean test deps bin
 
-all: $(GOPATH) $(PROJECT)
+all: deps bin
 
 clean:
-	rm -rf $(GOPATH) $(PROJECT)
+	rm -rf $(GOPATH) $(PROJECT) simple
 
 test:
 	GOPATH=$(GOPATH) go test ./...
 
 # deps
-$(GOPATH):
+deps: .gobuild
+.gobuild:
 	mkdir -p $(PROJECT_PATH)
 	cd $(PROJECT_PATH) && ln -s ../../../.. $(PROJECT)
 
@@ -35,6 +36,6 @@ $(GOPATH):
 	GOPATH=$(GOPATH) go get -d github.com/onsi/ginkgo
 
 # build
-$(PROJECT): $(SOURCE)
+bin: $(SOURCE)
 	GOPATH=$(GOPATH) go build -ldflags "-X main.clientMaticVersion $(VERSION)" -o $(PROJECT)
-	GOPATH=$(GOPATH) go build ./fixture/simple
+	GOPATH=$(GOPATH) go build ./fixture/simple/...
