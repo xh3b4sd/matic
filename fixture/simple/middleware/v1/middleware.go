@@ -25,6 +25,12 @@ func Foo(res http.ResponseWriter, req *http.Request, ctx *srvPkg.Context) error 
 
 func (v1 *V1) HelloWorldThree(res http.ResponseWriter, req *http.Request, ctx *srvPkg.Context) error {
 	v1.Logger.Debug("hello world three")
+
+	var err error
+	if err != nil {
+		return ctx.Response.Json(apiSchemaPkg.StatusResourceNotFound(), http.StatusInternalServerError)
+	}
+
 	return ctx.Response.Json(apiSchemaPkg.StatusData("hello world"), http.StatusOK)
 }
 

@@ -8,7 +8,7 @@ PROJECT_PATH := $(GOPATH)/src/github.com/$(ORGANIZATION)
 
 .PHONY=all clean test deps bin
 
-all: deps bin
+all: deps $(PROJECT)
 
 clean:
 	rm -rf $(GOPATH) $(PROJECT) simple
@@ -36,6 +36,6 @@ deps: .gobuild
 	GOPATH=$(GOPATH) go get -d github.com/onsi/ginkgo
 
 # build
-bin: $(SOURCE)
-	GOPATH=$(GOPATH) go build -ldflags "-X main.clientMaticVersion $(VERSION)" -o $(PROJECT)
+$(PROJECT): $(SOURCE)
+	GOPATH=$(GOPATH) go build -ldflags "-X main.projectVersion $(VERSION)" -o $(PROJECT)
 	GOPATH=$(GOPATH) go build ./fixture/simple/...

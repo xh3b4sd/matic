@@ -1,6 +1,7 @@
 package collector
 
 import (
+	"go/ast"
 	"go/parser"
 	"go/token"
 	"io/ioutil"
@@ -36,10 +37,11 @@ func SourceCodeTask(ctx interface{}) error {
 		}
 
 		// Create context file.
-		file := File{
-			Path:    path,
-			Code:    code,
-			AstFile: astFile,
+		file := &File{
+			Path:        path,
+			Code:        code,
+			AstFile:     astFile,
+			ReturnStmts: map[string][]*ast.ReturnStmt{},
 		}
 
 		ctx.(*Ctx).Files = append(ctx.(*Ctx).Files, file)

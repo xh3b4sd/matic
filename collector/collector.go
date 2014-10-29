@@ -1,8 +1,6 @@
 package collector
 
 import (
-	"go/ast"
-
 	taskqPkg "github.com/zyndiecate/taskq"
 )
 
@@ -14,36 +12,6 @@ type Logger func(f string, v ...interface{})
 
 func Configure(verboseLogger Logger) {
 	Verbosef = verboseLogger
-}
-
-type File struct {
-	// File path of a source code file.
-	Path string
-
-	// Go code in string form of a source code file.
-	Code string
-
-	// Variable name of the imported middleware package, if any.
-	PkgImport string
-
-	// *ast.File of the current go code.
-	AstFile *ast.File
-
-	// Serve information describing which routes the middleware server provides.
-	ServeStmts []ServeStmt
-
-	// Middleware information describing data and logic used of provided routes.
-	//Middlewares []Middleware
-}
-
-type Ctx struct {
-	WorkingDir string
-
-	// Variable name of the created middleware server, if any. We assume there is
-	// only one created middleware server. Maybe that is not true for all cases.
-	ServerName string
-
-	Files []File
 }
 
 type ClientCollectorI interface {
@@ -77,10 +45,8 @@ func (gcg *GoClientCollector) GenerateClient(wd string) error {
 		taskqPkg.InSeries(
 			SourceCodeTask,
 			PackageImportTask,
-			ServerNameTask,
-			ServeStmtTask,
-			// find middlewares for each route
-			// find possible responses for each route
+			ServeCallTask,
+			ServeInfoTask,
 		),
 	)
 
